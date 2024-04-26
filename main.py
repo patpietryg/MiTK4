@@ -3,7 +3,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
-from typing import Optional
 import base64
 import uvicorn
 
@@ -65,6 +64,15 @@ def verify_signature(message: bytes, signature: bytes, public_key):
 
 @app.get("/symmetric/key")
 def get_symmetric_key():
+    """
+        Generates and returns a new symmetric key.
+
+        Input:
+            None
+
+        Output:
+            JSON response containing the generated symmetric key.
+        """
     global symmetric_key
     symmetric_key = generate_symmetric_key()
     return {"key": symmetric_key.hex()}
@@ -72,6 +80,15 @@ def get_symmetric_key():
 
 @app.post("/symmetric/key")
 def set_symmetric_key(key: str):
+    """
+        Sets the symmetric key using the provided key.
+
+        Input:
+            key (str): Hexadecimal representation of the symmetric key.
+
+        Output:
+            JSON response confirming successful key setting.
+        """
     global symmetric_key
     try:
         symmetric_key = bytes.fromhex(key)
@@ -82,6 +99,15 @@ def set_symmetric_key(key: str):
 
 @app.post("/symmetric/encode")
 def encode_symmetric(message: str):
+    """
+        Encrypts the provided message using the symmetric key.
+
+        Input:
+            message (str): Message to be encrypted.
+
+        Output:
+            JSON response containing the encrypted message.
+        """
     global symmetric_key
     if symmetric_key is None:
         raise HTTPException(status_code=400, detail="Symmetric key not set.")
@@ -91,6 +117,15 @@ def encode_symmetric(message: str):
 
 @app.post("/symmetric/decode")
 def decode_symmetric(encrypted_message: str):
+    """
+        Decrypts the provided encrypted message using the symmetric key.
+
+        Input:
+            encrypted_message (str): Encrypted message to be decrypted.
+
+        Output:
+            JSON response containing the decrypted message.
+        """
     global symmetric_key
     if symmetric_key is None:
         raise HTTPException(status_code=400, detail="Symmetric key not set.")
@@ -102,6 +137,15 @@ def decode_symmetric(encrypted_message: str):
 
 @app.get("/asymmetric/key")
 def get_asymmetric_key():
+    """
+        Generates and returns a new pair of asymmetric keys.
+
+        Input:
+            None
+
+        Output:
+            JSON response containing the generated private and public keys.
+        """
     global asymmetric_private_key, asymmetric_public_key
     asymmetric_private_key, asymmetric_public_key = generate_asymmetric_keys()
     return {
@@ -119,6 +163,15 @@ def get_asymmetric_key():
 
 @app.get("/asymmetric/key/ssh")
 def get_asymmetric_key_ssh():
+    """
+        Returns the SSH-compatible formats of the generated asymmetric keys.
+
+        Input:
+            None
+
+        Output:
+            JSON response containing the private and public keys in SSH format.
+        """
     global asymmetric_private_key, asymmetric_public_key
     if asymmetric_private_key is None or asymmetric_public_key is None:
         raise HTTPException(status_code=400, detail="Asymmetric keys not generated.")
@@ -136,6 +189,15 @@ def get_asymmetric_key_ssh():
 
 @app.post("/asymmetric/key")
 def set_asymmetric_key(keys: dict):
+    """
+        Sets the asymmetric keys using the provided private and public keys.
+
+        Input:
+            keys (dict): Dictionary containing the private_key and public_key as strings.
+
+        Output:
+            JSON response confirming successful key setting.
+        """
     global asymmetric_private_key, asymmetric_public_key
     try:
         private_bytes = keys["private_key"].encode()
@@ -155,6 +217,16 @@ def set_asymmetric_key(keys: dict):
 
 @app.post("/asymmetric/verify")
 def verify_asymmetric(message: str, signature: str):
+    """
+        Verifies the signature of the provided message using the asymmetric key.
+
+        Input:
+            message (str): Message to be verified.
+            signature (str): Signature to be verified.
+
+        Output:
+            JSON response indicating whether the signature is verified or not.
+        """
     global asymmetric_private_key
     if asymmetric_private_key is None:
         raise HTTPException(status_code=400, detail="Asymmetric key not set.")
@@ -166,6 +238,15 @@ def verify_asymmetric(message: str, signature: str):
 
 @app.post("/asymmetric/sign")
 def sign_asymmetric(message: str):
+    """
+        Creates a signature for the provided message using the asymmetric key.
+
+        Input:
+            message (str): Message to be signed.
+
+        Output:
+            JSON response containing the created signature.
+        """
     global asymmetric_public_key
     if asymmetric_public_key is None:
         raise HTTPException(status_code=400, detail="Asymmetric key not set.")
@@ -175,6 +256,15 @@ def sign_asymmetric(message: str):
 
 @app.post("/asymmetric/encode")
 def encode_asymmetric(message: str):
+    """
+       Encrypts the provided message using the asymmetric key.
+
+       Input:
+           message (str): Message to be encrypted.
+
+       Output:
+           JSON response containing the encrypted message.
+       """
     global asymmetric_public_key
     if asymmetric_public_key is None:
         raise HTTPException(status_code=400, detail="Asymmetric key not set.")
@@ -190,6 +280,15 @@ def encode_asymmetric(message: str):
 
 @app.post("/asymmetric/decode")
 def decode_asymmetric(encrypted_message: str):
+    """
+    Decrypts the provided encrypted message using the asymmetric key.
+
+    Input:
+        encrypted_message (str): Encrypted message to be decrypted.
+
+    Output:
+        JSON response containing the decrypted message.
+    """
     global asymmetric_private_key
     if asymmetric_private_key is None:
         raise HTTPException(status_code=400, detail="Asymmetric key not set.")
@@ -202,6 +301,3 @@ def decode_asymmetric(encrypted_message: str):
     )
     return {"decrypted_message": decrypted_message.decode()}
 
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
